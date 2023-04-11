@@ -5,7 +5,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-const EventChannel _platformVelocityEventChannel = EventChannel('scroll_overlay.flutter.io/velocity');
+const EventChannel _platformVelocityEventChannel =
+    EventChannel('scroll_overlay.flutter.io/velocity');
 
 void main() {
   runApp(DemoApp(
@@ -77,8 +78,7 @@ class _FlutterDemoState extends State<FlutterDemo> {
         }
         if (oldOffset != null) {
           final timeDelta = (timeStamp - oldTimeStamp!).inMicroseconds;
-          if (timeDelta == 0)
-            return;
+          if (timeDelta == 0) return;
           final double delta = controller.offset - oldOffset!;
           final double velocity = delta / timeDelta * 1e6;
           if (velocity != flutterVelocity) {
@@ -93,7 +93,9 @@ class _FlutterDemoState extends State<FlutterDemo> {
     });
 
     // Record the platform velocity whenever the platform code sends it.
-    _platformVelocityEventChannel.receiveBroadcastStream().listen((dynamic velocity) {
+    _platformVelocityEventChannel
+        .receiveBroadcastStream()
+        .listen((dynamic velocity) {
       if (velocity != platformVelocity) {
         setState(() {
           platformVelocity = velocity / MediaQuery.of(context).devicePixelRatio;
@@ -109,9 +111,12 @@ class _FlutterDemoState extends State<FlutterDemo> {
   }
 
   ScrollPhysics getScrollPhysics(BuildContext context) {
-    final parent = ScrollConfiguration.of(context).getScrollPhysics(context);
-    final custom = widget.physics;
-    final physics = custom != null ? custom.applyTo(parent) : parent;
+    // kingwei
+    // final parent = ScrollConfiguration.of(context).getScrollPhysics(context);
+    // final custom = widget.physics;
+    // final physics = custom != null ? custom.applyTo(parent) : parent;
+    final physics = BouncingScrollPhysics();
+    // final physics = ClampingScrollPhysics();
     return DebugScrollPhysics().applyTo(physics);
   }
 
@@ -122,7 +127,7 @@ class _FlutterDemoState extends State<FlutterDemo> {
         children: <Widget>[
           ListView.builder(
             controller: controller,
-            itemCount: 1000,
+            itemCount: 100,
             physics: getScrollPhysics(context),
             itemBuilder: (BuildContext context, int index) {
               return Container(
@@ -151,14 +156,15 @@ class _FlutterDemoState extends State<FlutterDemo> {
           Align(
             alignment: FractionalOffset.centerRight,
             child: DefaultTextStyle.merge(
-              style: const TextStyle (fontSize: 18.0),
-              child: Padding(padding: EdgeInsets.only(right: 16),
+              style: const TextStyle(fontSize: 18.0),
+              child: Padding(
+                padding: EdgeInsets.only(right: 16),
                 child: SizedBox(
-                    width: 240,
-                    child: VelocityOverlay(
-                      flutterVelocity: flutterVelocity,
-                      platformVelocity: platformVelocity,
-                    ),
+                  width: 240,
+                  child: VelocityOverlay(
+                    flutterVelocity: flutterVelocity,
+                    platformVelocity: platformVelocity,
+                  ),
                 ),
               ),
             ),
@@ -184,7 +190,8 @@ class DebugScrollPhysics extends ScrollPhysics {
   }
 
   @override
-  Simulation? createBallisticSimulation(ScrollMetrics position, double velocity) {
+  Simulation? createBallisticSimulation(
+      ScrollMetrics position, double velocity) {
     if (debugPrintCreateBallisticSimulation) {
       debugPrint(
           "createBallisticSimulation: velocity ${velocity.toStringAsFixed(1)}" +
@@ -192,6 +199,56 @@ class DebugScrollPhysics extends ScrollPhysics {
               ", range ${position.minScrollExtent.toStringAsFixed(1)}..${position.maxScrollExtent.toStringAsFixed(1)}");
     }
     return super.createBallisticSimulation(position, velocity);
+  }
+
+  @override
+  double applyPhysicsToUserOffset(ScrollMetrics position, double offset) {
+    print(
+        "[kingwei]applyPhysicsToUserOffset position.pixels: ${position.pixels}, position.minScrollExtent: ${position.minScrollExtent}, position.maxScrollExtent: ${position.maxScrollExtent}, position.extentBefore: ${position.extentBefore}, position.extentInside: ${position.extentInside}, position.extentAfter: ${position.extentAfter}, position.atEdge: ${position.atEdge}, position.outOfRange: ${position.outOfRange}, position.viewportDimension: ${position.viewportDimension}, position.axisDirection: ${position.axisDirection}");
+    print("[kingwei]offset: ${offset}");
+    final result = super.applyPhysicsToUserOffset(position, offset);
+    print("[kingwei]applyPhysicsToUserOffset result: ${result}");
+    return result;
+  }
+
+  @override
+  double applyBoundaryConditions(ScrollMetrics position, double value) {
+    print(
+        "[kingwei]applyPhysicsToUserOffset position.pixels: ${position.pixels}, position.minScrollExtent: ${position.minScrollExtent}, position.maxScrollExtent: ${position.maxScrollExtent}, position.extentBefore: ${position.extentBefore}, position.extentInside: ${position.extentInside}, position.extentAfter: ${position.extentAfter}, position.atEdge: ${position.atEdge}, position.outOfRange: ${position.outOfRange}, position.viewportDimension: ${position.viewportDimension}, position.axisDirection: ${position.axisDirection}");
+    print("[kingwei]value: ${value}");
+    double result = 0;
+    if (value < position.pixels &&
+        position.pixels <= position.minScrollExtent) {
+      // Underscroll.
+      result = value - position.pixels;
+      print("[kingwei]applyBoundaryConditions Underscroll result: ${result}");
+      return result;
+    }
+    if (position.maxScrollExtent <= position.pixels &&
+        position.pixels < value) {
+      // Overscroll.
+      result = value - position.pixels;
+      print("[kingwei]applyBoundaryConditions Overscroll result: ${result}");
+      return result;
+    }
+    if (value < position.minScrollExtent &&
+        position.minScrollExtent < position.pixels) {
+      // Hit top edge.
+      result = value - position.minScrollExtent;
+      print("[kingwei]applyBoundaryConditions Hit top edge result: ${result}");
+      return result;
+    }
+    if (position.pixels < position.maxScrollExtent &&
+        position.maxScrollExtent < value) {
+      // Hit bottom edge.
+      result = value - position.maxScrollExtent;
+      print(
+          "[kingwei]applyBoundaryConditions Hit bottom edge result: ${result}");
+      return result;
+    }
+    result = 0.0;
+    print("[kingwei]applyBoundaryConditions result: ${result}");
+    return result;
   }
 }
 
@@ -217,22 +274,20 @@ class VelocityOverlay extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
         Text('Velocity:'),
-
         SizedBox(height: 8),
         NumberRow(label: 'Flutter', value: flutterVelocity),
         VelocityBar(value: flutterVelocity, scale: 8000),
-
         SizedBox(height: 8),
         NumberRow(label: 'Platform', value: platformVelocity),
         VelocityBar(value: platformVelocity, scale: 8000),
-
         SizedBox(height: 8),
-        NumberRow(label: 'Difference', value: flutterVelocity - platformVelocity),
+        NumberRow(
+            label: 'Difference', value: flutterVelocity - platformVelocity),
         VelocityBar(value: flutterVelocity - platformVelocity, scale: 800),
-
         SizedBox(height: 8),
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          Expanded(child: Text('Ratio')), Text(ratio?.toStringAsFixed(2) ?? "∞")
+          Expanded(child: Text('Ratio')),
+          Text(ratio?.toStringAsFixed(2) ?? "∞")
         ]),
         VelocityBar(value: ((ratio ?? 1e9) - 1), scale: 1),
       ],
