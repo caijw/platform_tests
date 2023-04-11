@@ -5,6 +5,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+bool printApplyPhysicsToUserOffset = true;
+bool printApplyBoundaryConditions = true;
+
 const EventChannel _platformVelocityEventChannel =
     EventChannel('scroll_overlay.flutter.io/velocity');
 
@@ -201,13 +204,20 @@ class DebugScrollPhysics extends ScrollPhysics {
     return super.createBallisticSimulation(position, velocity);
   }
 
+  // kingwei: update position.pixels
+  // next position.pixels = current position.pixels + result
   @override
   double applyPhysicsToUserOffset(ScrollMetrics position, double offset) {
-    print(
-        "[kingwei]applyPhysicsToUserOffset position.pixels: ${position.pixels}, position.minScrollExtent: ${position.minScrollExtent}, position.maxScrollExtent: ${position.maxScrollExtent}, position.extentBefore: ${position.extentBefore}, position.extentInside: ${position.extentInside}, position.extentAfter: ${position.extentAfter}, position.atEdge: ${position.atEdge}, position.outOfRange: ${position.outOfRange}, position.viewportDimension: ${position.viewportDimension}, position.axisDirection: ${position.axisDirection}");
-    print("[kingwei]offset: ${offset}");
+    if (printApplyPhysicsToUserOffset) {
+      print(
+          "[kingwei]applyPhysicsToUserOffset position.pixels: ${position.pixels}, position.minScrollExtent: ${position.minScrollExtent}, position.maxScrollExtent: ${position.maxScrollExtent}, position.extentBefore: ${position.extentBefore}, position.extentInside: ${position.extentInside}, position.extentAfter: ${position.extentAfter}, position.atEdge: ${position.atEdge}, position.outOfRange: ${position.outOfRange}, position.viewportDimension: ${position.viewportDimension}, position.axisDirection: ${position.axisDirection}");
+      print("[kingwei]applyPhysicsToUserOffset offset: ${offset}");
+    }
+
     final result = super.applyPhysicsToUserOffset(position, offset);
-    print("[kingwei]applyPhysicsToUserOffset result: ${result}");
+    if (printApplyPhysicsToUserOffset) {
+      print("[kingwei]applyPhysicsToUserOffset result: ${result}");
+    }
     return result;
   }
 
@@ -218,41 +228,55 @@ class DebugScrollPhysics extends ScrollPhysics {
   // ClampingScrollPhysics
   @override
   double applyBoundaryConditions(ScrollMetrics position, double value) {
-    print(
-        "[kingwei]applyBoundaryConditions position.pixels: ${position.pixels}, position.minScrollExtent: ${position.minScrollExtent}, position.maxScrollExtent: ${position.maxScrollExtent}, position.extentBefore: ${position.extentBefore}, position.extentInside: ${position.extentInside}, position.extentAfter: ${position.extentAfter}, position.atEdge: ${position.atEdge}, position.outOfRange: ${position.outOfRange}, position.viewportDimension: ${position.viewportDimension}, position.axisDirection: ${position.axisDirection}");
-    print("[kingwei]value: ${value}");
+    if (printApplyBoundaryConditions) {
+      print(
+          "[kingwei]applyBoundaryConditions position.pixels: ${position.pixels}, position.minScrollExtent: ${position.minScrollExtent}, position.maxScrollExtent: ${position.maxScrollExtent}, position.extentBefore: ${position.extentBefore}, position.extentInside: ${position.extentInside}, position.extentAfter: ${position.extentAfter}, position.atEdge: ${position.atEdge}, position.outOfRange: ${position.outOfRange}, position.viewportDimension: ${position.viewportDimension}, position.axisDirection: ${position.axisDirection}");
+      print("[kingwei]applyBoundaryConditions value: ${value}");
+    }
+
     double result = 0;
     if (value < position.pixels &&
         position.pixels <= position.minScrollExtent) {
       // Underscroll.
       result = value - position.pixels;
-      print("[kingwei]applyBoundaryConditions result: Underscroll ${result}");
+      if (printApplyBoundaryConditions) {
+        print("[kingwei]applyBoundaryConditions result: Underscroll ${result}");
+      }
       return result;
     }
     if (position.maxScrollExtent <= position.pixels &&
         position.pixels < value) {
       // Overscroll.
       result = value - position.pixels;
-      print("[kingwei]applyBoundaryConditions result: Overscroll ${result}");
+      if (printApplyBoundaryConditions) {
+        print("[kingwei]applyBoundaryConditions result: Overscroll ${result}");
+      }
       return result;
     }
     if (value < position.minScrollExtent &&
         position.minScrollExtent < position.pixels) {
       // Hit top edge.
       result = value - position.minScrollExtent;
-      print("[kingwei]applyBoundaryConditions result: Hit top edge ${result}");
+      if (printApplyBoundaryConditions) {
+        print(
+            "[kingwei]applyBoundaryConditions result: Hit top edge ${result}");
+      }
       return result;
     }
     if (position.pixels < position.maxScrollExtent &&
         position.maxScrollExtent < value) {
       // Hit bottom edge.
       result = value - position.maxScrollExtent;
-      print(
-          "[kingwei]applyBoundaryConditions result: Hit bottom edge ${result}");
+      if (printApplyBoundaryConditions) {
+        print(
+            "[kingwei]applyBoundaryConditions result: Hit bottom edge ${result}");
+      }
       return result;
     }
     result = 0.0;
-    print("[kingwei]applyBoundaryConditions result: Default ${result}");
+    if (printApplyBoundaryConditions) {
+      print("[kingwei]applyBoundaryConditions result: Default ${result}");
+    }
     return result;
   }
 }
