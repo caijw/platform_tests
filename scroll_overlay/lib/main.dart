@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 
 bool printApplyPhysicsToUserOffset = true;
 bool printApplyBoundaryConditions = true;
+bool printCreateBallisticSimulation = true;
 
 const EventChannel _platformVelocityEventChannel =
     EventChannel('scroll_overlay.flutter.io/velocity');
@@ -178,8 +179,6 @@ class _FlutterDemoState extends State<FlutterDemo> {
   }
 }
 
-const bool debugPrintCreateBallisticSimulation = true;
-
 /// A [ScrollPhysics] that just forwards to its [parent], plus debug logging.
 ///
 /// This prints debug log messages on key method calls that are expected to be
@@ -195,11 +194,10 @@ class DebugScrollPhysics extends ScrollPhysics {
   @override
   Simulation? createBallisticSimulation(
       ScrollMetrics position, double velocity) {
-    if (debugPrintCreateBallisticSimulation) {
-      debugPrint(
-          "createBallisticSimulation: velocity ${velocity.toStringAsFixed(1)}" +
-              ", offset ${position.pixels.toStringAsFixed(1)}" +
-              ", range ${position.minScrollExtent.toStringAsFixed(1)}..${position.maxScrollExtent.toStringAsFixed(1)}");
+    if (printCreateBallisticSimulation) {
+      print("[kingwei]createBallisticSimulation: velocity ${velocity.toStringAsFixed(1)}" +
+          ", offset ${position.pixels.toStringAsFixed(1)}" +
+          ", range ${position.minScrollExtent.toStringAsFixed(1)}..${position.maxScrollExtent.toStringAsFixed(1)}");
     }
     return super.createBallisticSimulation(position, velocity);
   }
